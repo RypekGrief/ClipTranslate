@@ -5,7 +5,7 @@
 ### Açıklama
 **ClipTranslate**, Windows içerisinde çalışan, seçilen metini CTRL + SHIFT + X tuşlarana basarak İngilizce'ye çeviren bir çeviri uygulamasıdır.
 
-## Gereklilikler
+## Gereksinimler
 - [Python](https://www.python.org/downloads/windows/)
 - requirements.txt dosyasında ki tüm kütüphanaler indirilmesi gerekir. (Klasör içerisinde CMD açarak `py -m pip install -r requirements.txt` yazın)
 - [AutoHotkey V2](https://www.autohotkey.com/?__cf_chl_f_tk=A5jnZlgXkCamN5B5fiZDsWd2ML7sYOrbAfyCfAjUnbc-1783006160-1.0.1.1-6TIx.Ag1vvTq.ZsrXgb5_BZiy3W57c36MhiIdCz.I_A)
