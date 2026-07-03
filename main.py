@@ -5,8 +5,8 @@ import time
 import ctypes
 import threading
 import subprocess
+import winreg
 import pyperclip
-from win32com.client import Dispatch
 
 import translator
 import tray
@@ -74,42 +74,41 @@ def save_config():
 
 
 def set_startup(enable):
-    startup_dir = os.path.join(
-        os.environ["APPDATA"],
-        r"Microsoft\Windows\Start Menu\Programs\Startup",
-    )
-    shortcut_path = os.path.join(startup_dir, "ClipTranslate.lnk")
-
-    if enable:
-        shell = Dispatch("WScript.Shell")
-        shortcut = shell.CreateShortCut(shortcut_path)
-
-        if getattr(sys, "frozen", False):
-            shortcut.TargetPath = sys.executable
-            shortcut.WorkingDirectory = os.path.dirname(sys.executable)
-        else:
-            pythonw = os.path.join(os.path.dirname(sys.executable), "pythonw.exe")
-            script = os.path.abspath(__file__)
-            if os.path.exists(pythonw):
-                shortcut.TargetPath = pythonw
+    reg_key = r"Software\Microsoft\Windows\CurrentVersion\Run"
+    try:
+        reg = winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_key, 0, winreg.KEY_SET_VALUE)
+        if enable:
+            if getattr(sys, "frozen", False):
+                cmd = f'"{sys.executable}"'
             else:
-                shortcut.TargetPath = sys.executable
-            shortcut.Arguments = f'"{script}"'
-            shortcut.WorkingDirectory = os.path.dirname(script)
-
-        shortcut.Description = "ClipTranslate Clipboard Translator"
-        shortcut.Save()
-    else:
-        if os.path.exists(shortcut_path):
-            os.remove(shortcut_path)
+                pythonw = os.path.join(os.path.dirname(sys.executable), "pythonw.exe")
+                if os.path.exists(pythonw):
+                    cmd = f'"{pythonw}" "{os.path.abspath(__file__)}"'
+                else:
+                    cmd = f'"{sys.executable}" "{os.path.abspath(__file__)}"'
+            winreg.SetValueEx(reg, "ClipTranslate", 0, winreg.REG_SZ, cmd)
+        else:
+            try:
+                winreg.DeleteValue(reg, "ClipTranslate")
+            except FileNotFoundError:
+                pass
+        winreg.CloseKey(reg)
+        return True
+    except Exception:
+        return False
 
 
 def is_startup_enabled():
-    startup_dir = os.path.join(
-        os.environ["APPDATA"],
-        r"Microsoft\Windows\Start Menu\Programs\Startup",
-    )
-    return os.path.exists(os.path.join(startup_dir, "ClipTranslate.lnk"))
+    reg_key = r"Software\Microsoft\Windows\CurrentVersion\Run"
+    try:
+        reg = winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_key, 0, winreg.KEY_READ)
+        winreg.QueryValueEx(reg, "ClipTranslate")
+        winreg.CloseKey(reg)
+        return True
+    except FileNotFoundError:
+        return False
+    except Exception:
+        return False
 
 
 def _find_autohotkey():
@@ -232,9 +231,17 @@ def on_toggle_enabled(new_state):
 
 
 def on_toggle_startup(new_state):
-    config["start_with_windows"] = new_state
-    set_startup(new_state)
-    save_config()
+    if set_startup(new_state):
+        config["start_with_windows"] = new_state
+        save_config()
+    else:
+        config["start_with_windows"] = not new_state
+        save_config()
+        if _tray_app:
+            _tray_app.notify(
+                _tray_app.tr("notify_startup_error_title"),
+                _tray_app.tr("notify_startup_error_msg"),
+            )
 
 
 def on_toggle_notifications(new_state):
