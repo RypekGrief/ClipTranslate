@@ -8,7 +8,7 @@ This application uses **AutoHotkey** in the background to automate keyboard inpu
 
 ## Description
 
-**ClipTranslate** is a lightweight translation application for Windows. It instantly translates selected text into **English** using the **Ctrl + Shift + X** shortcut and automatically copies the translated result to your clipboard.
+**ClipTranslate** is a lightweight translation application for Windows. It instantly translates selected text into your preferred language using the **Ctrl + Shift + X** shortcut, automatically copies the translated result to the clipboard, and pastes it back into the active application.
 
 ---
 
@@ -29,10 +29,12 @@ py -m pip install -r requirements.txt
 
 ## Features
 
-- Instantly translates selected text into English.
-- Automatically copies the translated text to the clipboard.
+- Instantly translates selected text into your preferred target language.
+- Automatically copies and pastes the translated text back into the active application.
+- Supports **5 interface languages** that can be changed from the system tray.
+- Supports changing the **target translation language** directly from the system tray.
 - Works in almost any application where text can be selected and copied, including games, web browsers, Discord, Notepad, Visual Studio Code, and more.
-- Can automatically start with Windows from the system tray.
+- Can automatically start with Windows.
 - Optional desktop notifications after each successful translation.
 - Translation can be enabled or disabled directly from the system tray without closing the application.
 - Lightweight and resource-efficient, typically using less than **50 MB** of RAM.
@@ -43,10 +45,14 @@ py -m pip install -r requirements.txt
 
 1. Launch **ClipTranslate**.
 2. If **AutoHotkey** is not installed, the application will notify you.
-3. Type or locate any non-English text.
-4. Select the text you want to translate.
+3. Type or locate any text that you want to translate.
+4. Select the text.
 5. Press **Ctrl + Shift + X**.
-6. If notifications are enabled, a **"Text translated and copied to clipboard"** notification will appear.
-7. Press **Ctrl + V** to paste the translated text.
+6. ClipTranslate will automatically:
+   - Copy the selected text.
+   - Translate it into the selected target language.
+   - Copy the translated text to the clipboard.
+   - Paste it back into the active application.
+7. If notifications are enabled, a **"Text translated and copied to clipboard"** notification will appear.
 
-Your selected text has now been translated into English and copied to the clipboard.
+The selected text will be replaced with its translated version automatically.
