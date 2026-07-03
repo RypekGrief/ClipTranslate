@@ -99,7 +99,15 @@ STRINGS = {
     },
 }
 
-LANGUAGE_NAMES = {
+TRANSLATED_LANGUAGE_NAMES = {
+    "en": {"en": "English", "tr": "Turkish", "es": "Spanish", "fr": "French", "de": "German"},
+    "tr": {"en": "İngilizce", "tr": "Türkçe", "es": "İspanyolca", "fr": "Fransızca", "de": "Almanca"},
+    "es": {"en": "Inglés", "tr": "Turco", "es": "Español", "fr": "Francés", "de": "Alemán"},
+    "fr": {"en": "Anglais", "tr": "Turc", "es": "Espagnol", "fr": "Français", "de": "Allemand"},
+    "de": {"en": "Englisch", "tr": "Türkisch", "es": "Spanisch", "fr": "Französisch", "de": "Deutsch"},
+}
+
+NATIVE_LANGUAGE_NAMES = {
     "en": "English",
     "tr": "Türkçe",
     "es": "Español",
@@ -109,15 +117,18 @@ LANGUAGE_NAMES = {
 
 AVAILABLE_MENU_LANGUAGES = ["en", "tr", "es", "fr", "de"]
 
+AVAILABLE_TARGET_LANGUAGES = ["en", "tr", "es", "fr", "de"]
+
 
 class Tray:
-    def __init__(self, icon_path, state, menu_language, on_toggle_enabled, on_toggle_startup, on_toggle_notifications, on_menu_language_change):
+    def __init__(self, icon_path, state, menu_language, on_toggle_enabled, on_toggle_startup, on_toggle_notifications, on_menu_language_change, on_target_language_change):
         self.state = state
         self.menu_language = menu_language
         self.on_toggle_enabled = on_toggle_enabled
         self.on_toggle_startup = on_toggle_startup
         self.on_toggle_notifications = on_toggle_notifications
         self.on_menu_language_change = on_menu_language_change
+        self.on_target_language_change = on_target_language_change
 
         image = Image.open(icon_path)
         self.icon = pystray.Icon("ClipTranslate", image, "ClipTranslate", menu=self._menu())
@@ -127,6 +138,9 @@ class Tray:
 
     def tr(self, key):
         return self._s(key)
+
+    def _lang_name(self, lang_code):
+        return TRANSLATED_LANGUAGE_NAMES.get(self.menu_language, TRANSLATED_LANGUAGE_NAMES["en"]).get(lang_code, lang_code)
 
     def _menu(self):
         s = self._s
@@ -158,7 +172,7 @@ class Tray:
         s = self._s
         return pystray.Menu(
             pystray.MenuItem(s("menu_language"), self._menu_language_submenu()),
-            pystray.MenuItem(s("target_language"), None, enabled=False),
+            pystray.MenuItem(s("target_language"), self._target_language_submenu()),
         )
 
     def _menu_language_submenu(self):
@@ -167,7 +181,7 @@ class Tray:
             checked = (lang == self.menu_language)
             items.append(
                 pystray.MenuItem(
-                    LANGUAGE_NAMES[lang],
+                    NATIVE_LANGUAGE_NAMES[lang],
                     self._make_set_menu_language(lang),
                     checked=lambda item, l=lang: l == self.menu_language,
                     radio=True,
@@ -184,6 +198,29 @@ class Tray:
         self.menu_language = lang_code
         self.icon.menu = self._menu()
         self.on_menu_language_change(lang_code)
+
+    def _target_language_submenu(self):
+        items = []
+        for lang in AVAILABLE_TARGET_LANGUAGES:
+            items.append(
+                pystray.MenuItem(
+                    self._lang_name(lang),
+                    self._make_set_target_language(lang),
+                    checked=lambda item, l=lang: l == self.state["target_language"],
+                    radio=True,
+                )
+            )
+        return pystray.Menu(*items)
+
+    def _make_set_target_language(self, lang_code):
+        def handler(icon, item):
+            self._set_target_language(lang_code)
+        return handler
+
+    def _set_target_language(self, lang_code):
+        self.state["target_language"] = lang_code
+        self.icon.menu = self._menu()
+        self.on_target_language_change(lang_code)
 
     def _about_menu(self):
         s = self._s
