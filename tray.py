@@ -20,6 +20,8 @@ STRINGS = {
         "notify_translated_msg": "Text translated and copied to clipboard.",
         "notify_no_ahk_title": "ClipTranslate",
         "notify_no_ahk_msg": "AutoHotkey not found! Please install it.",
+        "notify_startup_error_title": "Error",
+        "notify_startup_error_msg": "Failed to update Windows startup setting.",
     },
     "tr": {
         "active": "Aktif",
@@ -39,6 +41,8 @@ STRINGS = {
         "notify_translated_msg": "Metin çevrildi ve panoya kopyalandı.",
         "notify_no_ahk_title": "ClipTranslate",
         "notify_no_ahk_msg": "AutoHotkey bulunamadı! Lütfen kurun.",
+        "notify_startup_error_title": "Hata",
+        "notify_startup_error_msg": "Windows başlangıç ayarı güncellenemedi.",
     },
     "es": {
         "active": "Activo",
@@ -58,6 +62,8 @@ STRINGS = {
         "notify_translated_msg": "Texto traducido y copiado al portapapeles.",
         "notify_no_ahk_title": "ClipTranslate",
         "notify_no_ahk_msg": "¡AutoHotkey no encontrado! Por favor, instálelo.",
+        "notify_startup_error_title": "Error",
+        "notify_startup_error_msg": "No se pudo actualizar la configuración de inicio de Windows.",
     },
     "fr": {
         "active": "Actif",
@@ -77,6 +83,8 @@ STRINGS = {
         "notify_translated_msg": "Texte traduit et copié dans le presse-papiers.",
         "notify_no_ahk_title": "ClipTranslate",
         "notify_no_ahk_msg": "AutoHotkey introuvable ! Veuillez l'installer.",
+        "notify_startup_error_title": "Erreur",
+        "notify_startup_error_msg": "Échec de la mise à jour du démarrage Windows.",
     },
     "de": {
         "active": "Aktiv",
@@ -96,6 +104,8 @@ STRINGS = {
         "notify_translated_msg": "Text übersetzt und in die Zwischenablage kopiert.",
         "notify_no_ahk_title": "ClipTranslate",
         "notify_no_ahk_msg": "AutoHotkey nicht gefunden! Bitte installieren.",
+        "notify_startup_error_title": "Fehler",
+        "notify_startup_error_msg": "Windows-Starteinstellung konnte nicht aktualisiert werden.",
     },
 }
 
