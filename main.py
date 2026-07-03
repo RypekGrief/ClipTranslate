@@ -14,6 +14,7 @@ import tray
 DEFAULT_CONFIG = {
     "hotkey": "ctrl+shift+x",
     "target_language": "en",
+    "menu_language": "en",
     "start_with_windows": True,
     "enabled": True,
     "show_notifications": True,
@@ -255,6 +256,7 @@ def main():
     _tray_app = tray.Tray(
         ICON_PATH,
         config,
+        config["menu_language"],
         on_toggle_enabled,
         on_toggle_startup,
         on_toggle_notifications,
