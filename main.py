@@ -247,6 +247,11 @@ def on_menu_language_change(new_lang):
     save_config()
 
 
+def on_target_language_change(new_lang):
+    config["target_language"] = new_lang
+    save_config()
+
+
 def main():
     global config, _tray_app
 
@@ -269,6 +274,7 @@ def main():
         on_toggle_startup,
         on_toggle_notifications,
         on_menu_language_change,
+        on_target_language_change,
     )
 
     if not ahk_ok:
