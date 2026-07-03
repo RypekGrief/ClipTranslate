@@ -32,6 +32,11 @@ TRIGGER_FILE = os.path.join(
     "ClipTranslate.trigger",
 )
 
+DONE_FILE = os.path.join(
+    os.environ.get("TEMP", os.environ.get("TMP", ".")),
+    "ClipTranslate.done",
+)
+
 
 def _exe_dir():
     if getattr(sys, "frozen", False):
@@ -203,6 +208,10 @@ def _handle_translate():
         if translated:
             pyperclip.copy(translated)
             _last_seq = user32.GetClipboardSequenceNumber()
+            try:
+                open(DONE_FILE, "w").close()
+            except OSError:
+                pass
             if config.get("show_notifications", True) and _tray_app:
                 _tray_app.notify(
                     _tray_app.tr("notify_translated_title"),
