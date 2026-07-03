@@ -1,5 +1,5 @@
 ![Downloads](https://img.shields.io/github/downloads/RypekGrief/ClipTranslate/total)
-![GitHub stars](https://img.shields.io/github/stars/RypekGrief/ClipTranslate?style=social)
+![Stars](https://img.shields.io/github/stars/RypekGrief/ClipTranslate?style=social)
 ![Status](https://img.shields.io/badge/Status-Active-success)
 [![Latest Release](https://img.shields.io/github/v/release/RypekGrief/ClipTranslate)](https://github.com/RypekGrief/ClipTranslate/releases)
 ![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows) 
