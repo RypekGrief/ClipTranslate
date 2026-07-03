@@ -205,7 +205,10 @@ def _handle_translate():
             pyperclip.copy(translated)
             _last_seq = user32.GetClipboardSequenceNumber()
             if config.get("show_notifications", True) and _tray_app:
-                _tray_app.notify("ClipTranslate", "Metin çevrildi ve panoya kopyalandı.")
+                _tray_app.notify(
+                    _tray_app.tr("notify_translated_title"),
+                    _tray_app.tr("notify_translated_msg"),
+                )
     except Exception:
         pass
 
@@ -270,7 +273,8 @@ def main():
 
     if not ahk_ok:
         threading.Timer(1.0, lambda: _tray_app.notify(
-            "ClipTranslate", "AutoHotkey bulunamadi! Lutfen kurun."
+            _tray_app.tr("notify_no_ahk_title"),
+            _tray_app.tr("notify_no_ahk_msg"),
         )).start()
 
     _tray_app.run()

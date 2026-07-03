@@ -16,6 +16,10 @@ STRINGS = {
         "creator": "Created by",
         "creator_name": "RypekGrief",
         "powered_by": "Powered by Google Translate",
+        "notify_translated_title": "ClipTranslate",
+        "notify_translated_msg": "Text translated and copied to clipboard.",
+        "notify_no_ahk_title": "ClipTranslate",
+        "notify_no_ahk_msg": "AutoHotkey not found! Please install it.",
     },
     "tr": {
         "active": "Aktif",
@@ -31,6 +35,10 @@ STRINGS = {
         "creator": "Oluşturan",
         "creator_name": "RypekGrief",
         "powered_by": "Powered by Google Translate",
+        "notify_translated_title": "ClipTranslate",
+        "notify_translated_msg": "Metin çevrildi ve panoya kopyalandı.",
+        "notify_no_ahk_title": "ClipTranslate",
+        "notify_no_ahk_msg": "AutoHotkey bulunamadı! Lütfen kurun.",
     },
     "es": {
         "active": "Activo",
@@ -46,6 +54,10 @@ STRINGS = {
         "creator": "Creado por",
         "creator_name": "RypekGrief",
         "powered_by": "Desarrollado por Google Translate",
+        "notify_translated_title": "ClipTranslate",
+        "notify_translated_msg": "Texto traducido y copiado al portapapeles.",
+        "notify_no_ahk_title": "ClipTranslate",
+        "notify_no_ahk_msg": "¡AutoHotkey no encontrado! Por favor, instálelo.",
     },
     "fr": {
         "active": "Actif",
@@ -61,6 +73,10 @@ STRINGS = {
         "creator": "Créé par",
         "creator_name": "RypekGrief",
         "powered_by": "Propulsé par Google Translate",
+        "notify_translated_title": "ClipTranslate",
+        "notify_translated_msg": "Texte traduit et copié dans le presse-papiers.",
+        "notify_no_ahk_title": "ClipTranslate",
+        "notify_no_ahk_msg": "AutoHotkey introuvable ! Veuillez l'installer.",
     },
     "de": {
         "active": "Aktiv",
@@ -76,6 +92,10 @@ STRINGS = {
         "creator": "Erstellt von",
         "creator_name": "RypekGrief",
         "powered_by": "Powered by Google Translate",
+        "notify_translated_title": "ClipTranslate",
+        "notify_translated_msg": "Text übersetzt und in die Zwischenablage kopiert.",
+        "notify_no_ahk_title": "ClipTranslate",
+        "notify_no_ahk_msg": "AutoHotkey nicht gefunden! Bitte installieren.",
     },
 }
 
@@ -104,6 +124,9 @@ class Tray:
 
     def _s(self, key):
         return STRINGS.get(self.menu_language, STRINGS["en"]).get(key, key)
+
+    def tr(self, key):
+        return self._s(key)
 
     def _menu(self):
         s = self._s
