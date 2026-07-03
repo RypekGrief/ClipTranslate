@@ -1,25 +1,25 @@
-# ⚠️ Dikkat
+# ⚠️ Warning
 
-Bu uygulama arka planda **AutoHotkey** kullanır. Bu nedenle bazı çevrim içi oyunlar veya anti-cheat sistemleri tarafından beklenmeyen davranışlar görülebilir. Uygulamayı kullanmadan önce bunun farkında olmanız önerilir.
+This application uses **AutoHotkey** in the background to automate keyboard input. Because of this, some online games or anti-cheat systems may detect or interfere with its behavior. Please use the application at your own discretion.
 
 ---
 
 # ClipTranslate
 
-## Açıklama
+## Description
 
-**ClipTranslate**, Windows için geliştirilmiş hafif bir çeviri uygulamasıdır. Seçtiğiniz metni **Ctrl + Shift + X** kısayolu ile anında İngilizce'ye çevirir ve sonucu otomatik olarak panoya kopyalar.
+**ClipTranslate** is a lightweight translation application for Windows. It instantly translates selected text into **English** using the **Ctrl + Shift + X** shortcut and automatically copies the translated result to your clipboard.
 
 ---
 
-## Kurulum
+## Installation
 
-Gerekli yazılımlar:
+### Requirements
 
 - [Python](https://www.python.org/downloads/windows/)
 - [AutoHotkey v2](https://www.autohotkey.com/)
 
-Ardından proje klasöründe CMD açarak aşağıdaki komutu çalıştırın:
+After installing the requirements, open a Command Prompt in the project folder and run:
 
 ```bash
 py -m pip install -r requirements.txt
@@ -27,26 +27,26 @@ py -m pip install -r requirements.txt
 
 ---
 
-## Özellikler
+## Features
 
-- Seçili metni anında İngilizce'ye çevirir.
-- Sonucu otomatik olarak panoya kopyalar.
-- Metin seçilebilen neredeyse tüm uygulamalarda çalışır (oyunlar, tarayıcılar, Discord, Not Defteri, Visual Studio Code vb.).
-- Sistem tepsisinden **Windows ile Başlat** seçeneği etkinleştirilerek bilgisayar açıldığında otomatik olarak başlatılabilir.
-- Çeviri tamamlandığında isteğe bağlı olarak masaüstü bildirimi gösterir.
-- Sistem tepsisindeki **Aktif** seçeneği ile uygulama kapatılmadan çeviri özelliği açılıp kapatılabilir.
-- Hafif bir uygulamadır ve genellikle **50 MB'den daha az RAM** kullanır.
+- Instantly translates selected text into English.
+- Automatically copies the translated text to the clipboard.
+- Works in almost any application where text can be selected and copied, including games, web browsers, Discord, Notepad, Visual Studio Code, and more.
+- Can automatically start with Windows from the system tray.
+- Optional desktop notifications after each successful translation.
+- Translation can be enabled or disabled directly from the system tray without closing the application.
+- Lightweight and resource-efficient, typically using less than **50 MB** of RAM.
 
 ---
 
-## Kullanım
+## Usage
 
-1. ClipTranslate'i çalıştırın.
-2. Bilgisayarınızda AutoHotkey kurulu değilse uygulama sizi uyaracaktır.
-3. İngilizce olmayan bir metin yazın.
-4. Çevirmek istediğiniz metni seçin.
-5. **Ctrl + Shift + X** tuşlarına basın.
-6. Bildirimler açıksa **"Metin Çevrildi ve Panoya Kopyalandı"** bildirimi görüntülenir.
-7. **Ctrl + V** ile çevrilen metni yapıştırın.
+1. Launch **ClipTranslate**.
+2. If **AutoHotkey** is not installed, the application will notify you.
+3. Type or locate any non-English text.
+4. Select the text you want to translate.
+5. Press **Ctrl + Shift + X**.
+6. If notifications are enabled, a **"Text translated and copied to clipboard"** notification will appear.
+7. Press **Ctrl + V** to paste the translated text.
 
-Artık seçtiğiniz metin İngilizce'ye çevrilmiş olacaktır.
+Your selected text has now been translated into English and copied to the clipboard.
