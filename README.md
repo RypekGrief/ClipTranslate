@@ -1,4 +1,10 @@
-[![Latest Release](https://img.shields.io/github/v/release/RypekGrief/ClipTranslate)](https://github.com/RypekGrief/ClipTranslate/releases) ![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows) ![Python](https://img.shields.io/badge/Python-3.14+-3776AB?logo=python&logoColor=white) ![AutoHotkey](https://img.shields.io/badge/AutoHotkey-v2-334455?logo=autohotkey&logoColor=white) ![License](https://img.shields.io/github/license/RypekGrief/ClipTranslate) ![Status](https://img.shields.io/badge/Status-Active-success)
+![Downloads](https://img.shields.io/github/downloads/RypekGrief/ClipTranslate/total) 
+[![Latest Release](https://img.shields.io/github/v/release/RypekGrief/ClipTranslate)](https://github.com/RypekGrief/ClipTranslate/releases)
+![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows) 
+![Python](https://img.shields.io/badge/Python-3.14+-3776AB?logo=python&logoColor=white) 
+![AutoHotkey](https://img.shields.io/badge/AutoHotkey-v2-334455?logo=autohotkey&logoColor=white) 
+![License](https://img.shields.io/github/license/RypekGrief/ClipTranslate) 
+![Status](https://img.shields.io/badge/Status-Active-success)
 # ⚠️ Warning
 
 This application uses **AutoHotkey** in the background to automate keyboard input. Because of this, some online games or anti-cheat systems may detect or interfere with its behavior. Please use the application at your own discretion.
