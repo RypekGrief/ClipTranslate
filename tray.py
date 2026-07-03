@@ -32,16 +32,72 @@ STRINGS = {
         "creator_name": "RypekGrief",
         "powered_by": "Powered by Google Translate",
     },
+    "es": {
+        "active": "Activo",
+        "start_with_windows": "Iniciar con Windows",
+        "show_notifications": "Mostrar Notificaciones",
+        "language": "Idioma",
+        "menu_language": "Idioma del Menú",
+        "target_language": "Idioma de Destino",
+        "about": "Acerca de",
+        "exit": "Salir",
+        "title": "ClipTranslate",
+        "version": "Versión 1.1.0",
+        "creator": "Creado por",
+        "creator_name": "RypekGrief",
+        "powered_by": "Desarrollado por Google Translate",
+    },
+    "fr": {
+        "active": "Actif",
+        "start_with_windows": "Démarrer avec Windows",
+        "show_notifications": "Afficher les Notifications",
+        "language": "Langue",
+        "menu_language": "Langue du Menu",
+        "target_language": "Langue Cible",
+        "about": "À propos",
+        "exit": "Quitter",
+        "title": "ClipTranslate",
+        "version": "Version 1.1.0",
+        "creator": "Créé par",
+        "creator_name": "RypekGrief",
+        "powered_by": "Propulsé par Google Translate",
+    },
+    "de": {
+        "active": "Aktiv",
+        "start_with_windows": "Mit Windows starten",
+        "show_notifications": "Benachrichtigungen anzeigen",
+        "language": "Sprache",
+        "menu_language": "Menüsprache",
+        "target_language": "Zielsprache",
+        "about": "Über",
+        "exit": "Beenden",
+        "title": "ClipTranslate",
+        "version": "Version 1.1.0",
+        "creator": "Erstellt von",
+        "creator_name": "RypekGrief",
+        "powered_by": "Powered by Google Translate",
+    },
 }
+
+LANGUAGE_NAMES = {
+    "en": "English",
+    "tr": "Türkçe",
+    "es": "Español",
+    "fr": "Français",
+    "de": "Deutsch",
+}
+
+AVAILABLE_MENU_LANGUAGES = ["en", "tr", "es", "fr", "de"]
 
 
 class Tray:
-    def __init__(self, icon_path, state, menu_language, on_toggle_enabled, on_toggle_startup, on_toggle_notifications):
+    def __init__(self, icon_path, state, menu_language, on_toggle_enabled, on_toggle_startup, on_toggle_notifications, on_menu_language_change):
         self.state = state
         self.menu_language = menu_language
         self.on_toggle_enabled = on_toggle_enabled
         self.on_toggle_startup = on_toggle_startup
         self.on_toggle_notifications = on_toggle_notifications
+        self.on_menu_language_change = on_menu_language_change
 
         image = Image.open(icon_path)
         self.icon = pystray.Icon("ClipTranslate", image, "ClipTranslate", menu=self._menu())
@@ -78,9 +134,33 @@ class Tray:
     def _language_menu(self):
         s = self._s
         return pystray.Menu(
-            pystray.MenuItem(s("menu_language"), None, enabled=False),
+            pystray.MenuItem(s("menu_language"), self._menu_language_submenu()),
             pystray.MenuItem(s("target_language"), None, enabled=False),
         )
+
+    def _menu_language_submenu(self):
+        items = []
+        for lang in AVAILABLE_MENU_LANGUAGES:
+            checked = (lang == self.menu_language)
+            items.append(
+                pystray.MenuItem(
+                    LANGUAGE_NAMES[lang],
+                    self._make_set_menu_language(lang),
+                    checked=lambda item, l=lang: l == self.menu_language,
+                    radio=True,
+                )
+            )
+        return pystray.Menu(*items)
+
+    def _make_set_menu_language(self, lang_code):
+        def handler(icon, item):
+            self._set_menu_language(lang_code)
+        return handler
+
+    def _set_menu_language(self, lang_code):
+        self.menu_language = lang_code
+        self.icon.menu = self._menu()
+        self.on_menu_language_change(lang_code)
 
     def _about_menu(self):
         s = self._s
