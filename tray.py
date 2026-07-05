@@ -250,9 +250,9 @@ NATIVE_LANGUAGE_NAMES = {
     "uk": "Українська",
 }
 
-AVAILABLE_MENU_LANGUAGES = ["en", "tr", "es", "fr", "de", "ru", "it", "pl", "ro", "uk"]
+AVAILABLE_MENU_LANGUAGES = sorted(["en", "tr", "es", "fr", "de", "ru", "it", "pl", "ro", "uk"])
 
-AVAILABLE_TARGET_LANGUAGES = ["en", "tr", "es", "fr", "de", "ru", "it", "pl", "ro", "uk"]
+AVAILABLE_TARGET_LANGUAGES = sorted(["en", "tr", "es", "fr", "de", "ru", "it", "pl", "ro", "uk"])
 
 
 class Tray:
