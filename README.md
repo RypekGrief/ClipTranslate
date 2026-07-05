@@ -38,8 +38,8 @@ py -m pip install -r requirements.txt
 ## Features
 
 - Instantly translates selected text into your preferred target language.
-- Automatically copies and pastes the translated text back into the active application.
-- Supports **5 interface languages** that can be changed from the system tray.
+- Automatically copies the translated text and optionally pastes it back into the active application.
+- Supports **10 interface languages** that can be changed from the system tray.
 - Supports changing the **target translation language** directly from the system tray.
 - Works in almost any application where text can be selected and copied, including games, web browsers, Discord, Notepad, Visual Studio Code, and more.
 - Can automatically start with Windows.
