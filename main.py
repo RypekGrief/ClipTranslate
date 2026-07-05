@@ -18,6 +18,7 @@ DEFAULT_CONFIG = {
     "start_with_windows": True,
     "enabled": True,
     "show_notifications": True,
+    "auto_paste": True,
 }
 
 config = {}
@@ -116,6 +117,19 @@ def is_startup_enabled():
         return False
 
 
+def _cleanup_old_startup_shortcut():
+    startup_dir = os.path.join(
+        os.environ["APPDATA"],
+        r"Microsoft\Windows\Start Menu\Programs\Startup",
+    )
+    shortcut_path = os.path.join(startup_dir, "ClipTranslate.lnk")
+    if os.path.exists(shortcut_path):
+        try:
+            os.remove(shortcut_path)
+        except OSError:
+            pass
+
+
 def _find_autohotkey():
     import shutil
 
@@ -208,10 +222,11 @@ def _handle_translate():
         if translated:
             pyperclip.copy(translated)
             _last_seq = user32.GetClipboardSequenceNumber()
-            try:
-                open(DONE_FILE, "w").close()
-            except OSError:
-                pass
+            if config.get("auto_paste", True):
+                try:
+                    open(DONE_FILE, "w").close()
+                except OSError:
+                    pass
             if config.get("show_notifications", True) and _tray_app:
                 _tray_app.notify(
                     _tray_app.tr("notify_translated_title"),
@@ -268,10 +283,17 @@ def on_target_language_change(new_lang):
     save_config()
 
 
+def on_auto_paste_change(new_state):
+    config["auto_paste"] = new_state
+    save_config()
+
+
 def main():
     global config, _tray_app
 
     load_config()
+
+    _cleanup_old_startup_shortcut()
 
     actual_startup = is_startup_enabled()
     if config["start_with_windows"] != actual_startup:
@@ -291,6 +313,7 @@ def main():
         on_toggle_notifications,
         on_menu_language_change,
         on_target_language_change,
+        on_auto_paste_change,
     )
 
     if not ahk_ok:

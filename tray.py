@@ -22,6 +22,7 @@ STRINGS = {
         "notify_no_ahk_msg": "AutoHotkey not found! Please install it.",
         "notify_startup_error_title": "Error",
         "notify_startup_error_msg": "Failed to update Windows startup setting.",
+        "auto_paste": "Auto Paste",
     },
     "tr": {
         "active": "Aktif",
@@ -43,6 +44,7 @@ STRINGS = {
         "notify_no_ahk_msg": "AutoHotkey bulunamadı! Lütfen kurun.",
         "notify_startup_error_title": "Hata",
         "notify_startup_error_msg": "Windows başlangıç ayarı güncellenemedi.",
+        "auto_paste": "Otomatik Yapıştırma",
     },
     "es": {
         "active": "Activo",
@@ -64,6 +66,7 @@ STRINGS = {
         "notify_no_ahk_msg": "¡AutoHotkey no encontrado! Por favor, instálelo.",
         "notify_startup_error_title": "Error",
         "notify_startup_error_msg": "No se pudo actualizar la configuración de inicio de Windows.",
+        "auto_paste": "Pegado Automático",
     },
     "fr": {
         "active": "Actif",
@@ -85,6 +88,7 @@ STRINGS = {
         "notify_no_ahk_msg": "AutoHotkey introuvable ! Veuillez l'installer.",
         "notify_startup_error_title": "Erreur",
         "notify_startup_error_msg": "Échec de la mise à jour du démarrage Windows.",
+        "auto_paste": "Collage Automatique",
     },
     "de": {
         "active": "Aktiv",
@@ -106,6 +110,7 @@ STRINGS = {
         "notify_no_ahk_msg": "AutoHotkey nicht gefunden! Bitte installieren.",
         "notify_startup_error_title": "Fehler",
         "notify_startup_error_msg": "Windows-Starteinstellung konnte nicht aktualisiert werden.",
+        "auto_paste": "Automatisches Einfügen",
     },
 }
 
@@ -131,7 +136,7 @@ AVAILABLE_TARGET_LANGUAGES = ["en", "tr", "es", "fr", "de"]
 
 
 class Tray:
-    def __init__(self, icon_path, state, menu_language, on_toggle_enabled, on_toggle_startup, on_toggle_notifications, on_menu_language_change, on_target_language_change):
+    def __init__(self, icon_path, state, menu_language, on_toggle_enabled, on_toggle_startup, on_toggle_notifications, on_menu_language_change, on_target_language_change, on_auto_paste_change):
         self.state = state
         self.menu_language = menu_language
         self.on_toggle_enabled = on_toggle_enabled
@@ -139,6 +144,7 @@ class Tray:
         self.on_toggle_notifications = on_toggle_notifications
         self.on_menu_language_change = on_menu_language_change
         self.on_target_language_change = on_target_language_change
+        self.on_auto_paste_change = on_auto_paste_change
 
         image = Image.open(icon_path)
         self.icon = pystray.Icon("ClipTranslate", image, "ClipTranslate", menu=self._menu())
@@ -169,6 +175,11 @@ class Tray:
                 s("show_notifications"),
                 self._toggle_notifications,
                 checked=lambda item: self.state["show_notifications"],
+            ),
+            pystray.MenuItem(
+                s("auto_paste"),
+                self._toggle_auto_paste,
+                checked=lambda item: self.state.get("auto_paste", True),
             ),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(s("language"), self._language_menu()),
@@ -256,6 +267,10 @@ class Tray:
     def _toggle_notifications(self, icon, item):
         self.state["show_notifications"] = not self.state["show_notifications"]
         self.on_toggle_notifications(self.state["show_notifications"])
+
+    def _toggle_auto_paste(self, icon, item):
+        self.state["auto_paste"] = not self.state.get("auto_paste", True)
+        self.on_auto_paste_change(self.state["auto_paste"])
 
     def _exit(self, icon, item):
         self.icon.stop()
