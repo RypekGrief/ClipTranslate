@@ -130,6 +130,15 @@ def _cleanup_old_startup_shortcut():
             pass
 
 
+def _cleanup_temp_files():
+    for f in (TRIGGER_FILE, DONE_FILE):
+        if os.path.isfile(f):
+            try:
+                os.remove(f)
+            except OSError:
+                pass
+
+
 def _find_autohotkey():
     import shutil
 
@@ -326,6 +335,7 @@ def main():
 
     _stop_event.set()
     _stop_ahk()
+    _cleanup_temp_files()
 
 
 if __name__ == "__main__":
