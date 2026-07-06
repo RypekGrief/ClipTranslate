@@ -39,25 +39,42 @@ DONE_FILE = os.path.join(
 )
 
 
-def _exe_dir():
-    if getattr(sys, "frozen", False):
-        return os.path.dirname(sys.executable)
-    return os.path.dirname(os.path.abspath(__file__))
-
-
 def _resource_dir():
     if getattr(sys, "frozen", False):
         return sys._MEIPASS
     return os.path.dirname(os.path.abspath(__file__))
 
 
-CONFIG_PATH = os.path.join(_exe_dir(), "config.json")
+CONFIG_DIR = os.path.join(os.environ["APPDATA"], "ClipTranslate")
+CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
 ICON_PATH = os.path.join(_resource_dir(), "icon.ico")
 AHK_SCRIPT = os.path.join(_resource_dir(), "translate.ahk")
 
 
+def _migrate_old_config():
+    old_paths = []
+    if getattr(sys, "frozen", False):
+        old_paths.append(os.path.join(os.path.dirname(sys.executable), "config.json"))
+    else:
+        old_paths.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json"))
+    for old in old_paths:
+        if os.path.isfile(old) and old != CONFIG_PATH:
+            import shutil as _shutil
+            try:
+                _shutil.copy2(old, CONFIG_PATH)
+                return
+            except OSError:
+                pass
+
+
 def load_config():
     global config
+
+    os.makedirs(CONFIG_DIR, exist_ok=True)
+
+    if not os.path.isfile(CONFIG_PATH):
+        _migrate_old_config()
+
     try:
         with open(CONFIG_PATH, "r", encoding="utf-8") as f:
             config = json.load(f)
