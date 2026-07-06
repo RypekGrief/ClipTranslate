@@ -14,7 +14,7 @@ This application uses **AutoHotkey** in the background to automate keyboard inpu
 
 # ClipTranslate
 
-## Description
+### Description
 
 **ClipTranslate** is a lightweight translation application for Windows. It instantly translates selected text into your preferred language using the **Ctrl + Shift + X** shortcut, automatically copies the translated result to the clipboard, and pastes it back into the active application.
 
