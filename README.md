@@ -1,6 +1,6 @@
 ![Downloads](https://img.shields.io/github/downloads/RypekGrief/ClipTranslate/total)
 ![Stars](https://img.shields.io/github/stars/RypekGrief/ClipTranslate?style=social)
-![Status]([https://img.shields.io/badge/Status-Inactive-red])
+![Status](https://img.shields.io/badge/Status-Inactive-red)
 [![Latest Release](https://img.shields.io/github/v/release/RypekGrief/ClipTranslate)](https://github.com/RypekGrief/ClipTranslate/releases)
 ![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows) 
 ![Python](https://img.shields.io/badge/Python-3.14+-3776AB?logo=python&logoColor=white) 
