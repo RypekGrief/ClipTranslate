@@ -27,12 +27,6 @@ This application uses **AutoHotkey** in the background to automate keyboard inpu
 - [Python](https://www.python.org/downloads/windows/)
 - [AutoHotkey v2](https://www.autohotkey.com/)
 
-After installing the requirements, open a Command Prompt in the project folder and run:
-
-```bash
-py -m pip install -r requirements.txt
-```
-
 
 
 ## Features
