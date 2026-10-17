@@ -1,5 +1,3 @@
 pyperclip
-deep-translator
 pystray
 Pillow
-pywin32

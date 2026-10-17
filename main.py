@@ -1,3 +1,4 @@
+import importlib
 import json
 import os
 import sys
@@ -6,6 +7,29 @@ import ctypes
 import threading
 import subprocess
 import winreg
+
+DEPENDENCIES = [
+    ("pyperclip", "pyperclip"),
+    ("pystray", "pystray"),
+    ("PIL", "Pillow"),
+]
+
+
+def _ensure_dependencies():
+    missing = []
+    for import_name, pip_name in DEPENDENCIES:
+        try:
+            importlib.import_module(import_name)
+        except ImportError:
+            missing.append(pip_name)
+    if missing:
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", *missing, "--quiet"]
+        )
+
+
+_ensure_dependencies()
+
 import pyperclip
 
 import translator
