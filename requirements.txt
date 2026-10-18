@@ -1,3 +1,4 @@
 pyperclip
 pystray
 Pillow
+keyboard

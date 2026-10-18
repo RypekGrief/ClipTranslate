@@ -5,13 +5,13 @@ import sys
 import time
 import ctypes
 import threading
-import subprocess
 import winreg
 
 DEPENDENCIES = [
     ("pyperclip", "pyperclip"),
     ("pystray", "pystray"),
     ("PIL", "Pillow"),
+    ("keyboard", "keyboard"),
 ]
 
 
@@ -23,6 +23,7 @@ def _ensure_dependencies():
         except ImportError:
             missing.append(pip_name)
     if missing:
+        import subprocess
         subprocess.check_call(
             [sys.executable, "-m", "pip", "install", *missing, "--quiet"]
         )
@@ -31,6 +32,7 @@ def _ensure_dependencies():
 _ensure_dependencies()
 
 import pyperclip
+import keyboard
 
 import translator
 import tray
@@ -47,20 +49,8 @@ DEFAULT_CONFIG = {
 
 config = {}
 _tray_app = None
-_ahk_process = None
-_last_seq = 0
-_ipc_ready = threading.Event()
-_stop_event = threading.Event()
-
-TRIGGER_FILE = os.path.join(
-    os.environ.get("TEMP", os.environ.get("TMP", ".")),
-    "ClipTranslate.trigger",
-)
-
-DONE_FILE = os.path.join(
-    os.environ.get("TEMP", os.environ.get("TMP", ".")),
-    "ClipTranslate.done",
-)
+_busy = False
+_busy_lock = threading.Lock()
 
 
 def _resource_dir():
@@ -72,7 +62,6 @@ def _resource_dir():
 CONFIG_DIR = os.path.join(os.environ["APPDATA"], "ClipTranslate")
 CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
 ICON_PATH = os.path.join(_resource_dir(), "icon.ico")
-AHK_SCRIPT = os.path.join(_resource_dir(), "translate.ahk")
 
 
 def _migrate_old_config():
@@ -171,132 +160,70 @@ def _cleanup_old_startup_shortcut():
             pass
 
 
-def _cleanup_temp_files():
-    for f in (TRIGGER_FILE, DONE_FILE):
-        if os.path.isfile(f):
-            try:
-                os.remove(f)
-            except OSError:
-                pass
+def _clipboard_wait(timeout=1.0):
+    user32 = ctypes.windll.user32
+    start_seq = user32.GetClipboardSequenceNumber()
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if user32.GetClipboardSequenceNumber() != start_seq:
+            return True
+        time.sleep(0.01)
+    return False
 
 
-def _find_autohotkey():
-    import shutil
-
-    exe_names = [
-        "AutoHotkeyU64.exe", "AutoHotkey64.exe",
-        "AutoHotkeyU32.exe", "AutoHotkey.exe",
-        "AutoHotkeyA32.exe", "AutoHotkey32.exe",
-    ]
-
-    for name in exe_names:
-        ahk = shutil.which(name)
-        if ahk:
-            return ahk
-
-    base_dirs = [
-        os.environ.get("ProgramFiles", "C:\\Program Files"),
-        os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)"),
-        os.path.join(os.environ.get("LOCALAPPDATA", ""), "Programs"),
-    ]
-
-    for base in base_dirs:
-        ahk_dir = os.path.join(base, "AutoHotkey")
-        if not os.path.isdir(ahk_dir):
-            continue
-        for root, _dirs, files in os.walk(ahk_dir):
-            for name in exe_names:
-                if name in files:
-                    return os.path.join(root, name)
-
-    return None
-
-
-def _start_ahk():
-    global _ahk_process
-
-    ahk_exe = _find_autohotkey()
-    if not ahk_exe:
-        return False
-
+def _perform_translate():
+    keyboard.send('ctrl+c')
+    if not _clipboard_wait(1.0):
+        return
     try:
-        _ahk_process = subprocess.Popen(
-            [ahk_exe, AHK_SCRIPT],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            stdin=subprocess.DEVNULL,
-        )
-        return True
+        text = pyperclip.paste()
     except Exception:
-        return False
+        return
+    if not text or not text.strip():
+        return
+    translated = translator.translate(text, config["target_language"])
+    if not translated:
+        return
+    pyperclip.copy(translated)
+    if config.get("auto_paste", True):
+        time.sleep(0.05)
+        keyboard.send('ctrl+v')
+    if config.get("show_notifications", True) and _tray_app:
+        _tray_app.notify(
+            _tray_app.tr("notify_translated_title"),
+            _tray_app.tr("notify_translated_msg"),
+        )
 
 
-def _stop_ahk():
-    global _ahk_process
-    if _ahk_process:
-        try:
-            _ahk_process.terminate()
-            _ahk_process.wait(timeout=2)
-        except Exception:
-            try:
-                _ahk_process.kill()
-            except Exception:
-                pass
-        _ahk_process = None
-
-
-def _handle_translate():
-    global _last_seq
-
+def _dispatch_hotkey():
+    global _busy
+    if not config.get("enabled", True):
+        return
+    with _busy_lock:
+        if _busy:
+            return
+        _busy = True
     try:
-        if not config.get("enabled", True):
-            return
-
-        user32 = ctypes.windll.user32
-        curr = user32.GetClipboardSequenceNumber()
-        if curr == _last_seq:
-            return
-
-        try:
-            text = pyperclip.paste()
-        except Exception:
-            return
-
-        if not text or not text.strip():
-            return
-
-        _last_seq = curr
-
-        translated = translator.translate(text, config["target_language"])
-
-        if translated:
-            pyperclip.copy(translated)
-            _last_seq = user32.GetClipboardSequenceNumber()
-            if config.get("auto_paste", True):
-                try:
-                    open(DONE_FILE, "w").close()
-                except OSError:
-                    pass
-            if config.get("show_notifications", True) and _tray_app:
-                _tray_app.notify(
-                    _tray_app.tr("notify_translated_title"),
-                    _tray_app.tr("notify_translated_msg"),
-                )
+        _perform_translate()
     except Exception:
         pass
+    finally:
+        _busy = False
 
 
-def _ipc_thread():
-    _ipc_ready.set()
+def _on_hotkey():
+    threading.Thread(target=_dispatch_hotkey, daemon=True).start()
 
-    while not _stop_event.is_set():
-        if os.path.isfile(TRIGGER_FILE):
-            try:
-                os.remove(TRIGGER_FILE)
-            except OSError:
-                pass
-            _handle_translate()
-        time.sleep(0.1)
+
+def _start_hotkey():
+    keyboard.add_hotkey('ctrl+shift+x', _on_hotkey, suppress=True)
+
+
+def _stop_hotkey():
+    try:
+        keyboard.unhook_all()
+    except Exception:
+        pass
 
 
 def on_toggle_enabled(new_state):
@@ -349,11 +276,6 @@ def main():
     if config["start_with_windows"] != actual_startup:
         set_startup(config["start_with_windows"])
 
-    threading.Thread(target=_ipc_thread, daemon=True).start()
-    _ipc_ready.wait(timeout=5.0)
-
-    ahk_ok = _start_ahk()
-
     _tray_app = tray.Tray(
         ICON_PATH,
         config,
@@ -366,17 +288,11 @@ def main():
         on_auto_paste_change,
     )
 
-    if not ahk_ok:
-        threading.Timer(1.0, lambda: _tray_app.notify(
-            _tray_app.tr("notify_no_ahk_title"),
-            _tray_app.tr("notify_no_ahk_msg"),
-        )).start()
+    _start_hotkey()
 
     _tray_app.run()
 
-    _stop_event.set()
-    _stop_ahk()
-    _cleanup_temp_files()
+    _stop_hotkey()
 
 
 if __name__ == "__main__":
