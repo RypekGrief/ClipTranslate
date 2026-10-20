@@ -172,27 +172,37 @@ def _clipboard_wait(timeout=1.0):
 
 
 def _perform_translate():
-    keyboard.send('ctrl+c')
-    if not _clipboard_wait(1.0):
-        return
+    saved = keyboard.stash_state()
     try:
-        text = pyperclip.paste()
-    except Exception:
-        return
-    if not text or not text.strip():
-        return
-    translated = translator.translate(text, config["target_language"])
-    if not translated:
-        return
-    pyperclip.copy(translated)
-    if config.get("auto_paste", True):
-        time.sleep(0.05)
-        keyboard.send('ctrl+v')
-    if config.get("show_notifications", True) and _tray_app:
-        _tray_app.notify(
-            _tray_app.tr("notify_translated_title"),
-            _tray_app.tr("notify_translated_msg"),
-        )
+        keyboard.send('ctrl+c')
+        if not _clipboard_wait(1.0):
+            return
+        try:
+            text = pyperclip.paste()
+        except Exception:
+            return
+        if not text or not text.strip():
+            return
+        translated = translator.translate(text, config["target_language"])
+        if not translated:
+            return
+        pyperclip.copy(translated)
+        if config.get("auto_paste", True):
+            time.sleep(0.05)
+            keyboard.send('ctrl+v')
+        if config.get("show_notifications", True) and _tray_app:
+            _tray_app.notify(
+                _tray_app.tr("notify_translated_title"),
+                _tray_app.tr("notify_translated_msg"),
+            )
+    finally:
+        keyboard.restore_state(saved)
+        if not keyboard.is_pressed('shift'):
+            keyboard.release('shift')
+        if not keyboard.is_pressed('ctrl'):
+            keyboard.release('ctrl')
+        if not keyboard.is_pressed('alt'):
+            keyboard.release('alt')
 
 
 def _dispatch_hotkey():
