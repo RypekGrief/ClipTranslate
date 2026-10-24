@@ -41,6 +41,7 @@ class Tray:
                 s("active"),
                 self._toggle_enabled,
                 checked=lambda item: self.state["enabled"],
+                default=True,
             ),
             pystray.MenuItem(
                 s("start_with_windows"),
