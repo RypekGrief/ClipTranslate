@@ -227,6 +227,7 @@ def _on_hotkey():
 
 def _start_hotkey():
     keyboard.add_hotkey('ctrl+shift+x', _on_hotkey, suppress=True)
+    keyboard._listener.filtered_modifiers.clear()
 
 
 def _stop_hotkey():
