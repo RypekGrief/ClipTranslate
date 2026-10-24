@@ -1,5 +1,5 @@
 import pystray
-from PIL import Image
+from PIL import Image, ImageEnhance
 from languages import (
     STRINGS,
     TRANSLATED_LANGUAGE_NAMES,
@@ -20,7 +20,9 @@ class Tray:
         self.on_target_language_change = on_target_language_change
         self.on_auto_paste_change = on_auto_paste_change
 
-        image = Image.open(icon_path)
+        self._icon_original = Image.open(icon_path)
+        self._icon_disabled = ImageEnhance.Color(self._icon_original).enhance(0.0)
+        image = self._icon_disabled if not state.get("enabled", True) else self._icon_original
         self.icon = pystray.Icon("ClipTranslate", image, "ClipTranslate", menu=self._menu())
 
     def _s(self, key):
@@ -132,6 +134,7 @@ class Tray:
 
     def _toggle_enabled(self, icon, item):
         self.state["enabled"] = not self.state["enabled"]
+        self.icon.icon = self._icon_disabled if not self.state["enabled"] else self._icon_original
         self.on_toggle_enabled(self.state["enabled"])
 
     def _toggle_startup(self, icon, item):
