@@ -276,7 +276,8 @@ def _perform_translate():
             keyboard.release('ctrl')
         if not keyboard.is_pressed('alt'):
             keyboard.release('alt')
-        _restore_clipboard(saved_clipboard)
+        if config.get("auto_paste", True):
+            _restore_clipboard(saved_clipboard)
 
 
 def _dispatch_hotkey():
