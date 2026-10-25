@@ -1,5 +1,6 @@
+import os
 import pystray
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageDraw, ImageFont, ImageEnhance
 from languages import (
     STRINGS,
     TRANSLATED_LANGUAGE_NAMES,
@@ -22,8 +23,40 @@ class Tray:
 
         self._icon_original = Image.open(icon_path)
         self._icon_disabled = ImageEnhance.Color(self._icon_original).enhance(0.0)
-        image = self._icon_disabled if not state.get("enabled", True) else self._icon_original
-        self.icon = pystray.Icon("ClipTranslate", image, "ClipTranslate", menu=self._menu())
+        initial_icon = self._render_icon(
+            state.get("target_language", "en"),
+            state.get("enabled", True),
+        )
+        self.icon = pystray.Icon("ClipTranslate", initial_icon, "ClipTranslate", menu=self._menu())
+        self._update_title()
+
+    def _update_title(self):
+        lang = self.state.get("target_language", "en")
+        en_name = TRANSLATED_LANGUAGE_NAMES.get("en", {}).get(lang, lang)
+        self.icon.title = f"ClipTranslate → {en_name}"
+
+    def _render_icon(self, lang_code, enabled):
+        img = self._icon_original.copy()
+        draw = ImageDraw.Draw(img)
+        try:
+            font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 128)
+        except Exception:
+            font = ImageFont.load_default()
+        label = lang_code.upper()
+        bbox = draw.textbbox((0, 0), label, font=font)
+        tw = bbox[2] - bbox[0]
+        th = bbox[3] - bbox[1]
+        margin = 10
+        pad = 10
+        x2 = img.width - margin
+        y2 = img.height - margin
+        x1 = x2 - tw - pad * 2
+        y1 = y2 - th - pad * 2
+        draw.rounded_rectangle((x1, y1, x2, y2), radius=12, fill=(0, 0, 0, 180))
+        draw.text(((x1 + x2) // 2, (y1 + y2) // 2), label, fill="white", font=font, anchor="mm")
+        if not enabled:
+            img = ImageEnhance.Color(img).enhance(0.0)
+        return img
 
     def _s(self, key):
         return STRINGS.get(self.menu_language, STRINGS["en"]).get(key, key)
@@ -117,6 +150,8 @@ class Tray:
 
     def _set_target_language(self, lang_code):
         self.state["target_language"] = lang_code
+        self.icon.icon = self._render_icon(lang_code, self.state.get("enabled", True))
+        self._update_title()
         self.icon.menu = self._menu()
         self.on_target_language_change(lang_code)
 
@@ -135,7 +170,10 @@ class Tray:
 
     def _toggle_enabled(self, icon, item):
         self.state["enabled"] = not self.state["enabled"]
-        self.icon.icon = self._icon_disabled if not self.state["enabled"] else self._icon_original
+        self.icon.icon = self._render_icon(
+            self.state.get("target_language", "en"),
+            self.state["enabled"],
+        )
         self.on_toggle_enabled(self.state["enabled"])
 
     def _toggle_startup(self, icon, item):
