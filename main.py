@@ -188,6 +188,46 @@ _clip_user32.GetClipboardData.argtypes = [ctypes.c_uint]
 _clip_user32.GetClipboardData.restype = wintypes.HANDLE
 _clip_user32.SetClipboardData.argtypes = [ctypes.c_uint, wintypes.HANDLE]
 _clip_user32.SetClipboardData.restype = wintypes.HANDLE
+_clip_user32.GetAsyncKeyState.argtypes = [ctypes.c_int]
+_clip_user32.GetAsyncKeyState.restype = wintypes.SHORT
+_clip_user32.keybd_event.argtypes = [ctypes.c_byte, ctypes.c_byte, ctypes.c_uint, ctypes.c_void_p]
+
+VK_SHIFT = 0x10
+VK_CONTROL = 0x11
+VK_MENU = 0x12
+VK_LSHIFT = 0xA0
+VK_RSHIFT = 0xA1
+VK_LCONTROL = 0xA2
+VK_RCONTROL = 0xA3
+VK_LMENU = 0xA4
+VK_RMENU = 0xA5
+VK_X = 0x58
+KEYEVENTF_KEYUP = 0x0002
+
+
+def _wait_for_physical_release(timeout=0.5):
+    deadline = time.time() + timeout
+    vks = (VK_SHIFT, VK_LSHIFT, VK_RSHIFT, VK_CONTROL, VK_LCONTROL, VK_RCONTROL, VK_MENU, VK_LMENU, VK_RMENU, VK_X)
+    while time.time() < deadline:
+        if not any(_clip_user32.GetAsyncKeyState(vk) & 0x8000 for vk in vks):
+            break
+        time.sleep(0.01)
+
+
+def _release_modifiers():
+    for vk in (VK_LSHIFT, VK_RSHIFT, VK_SHIFT, VK_LCONTROL, VK_RCONTROL, VK_CONTROL, VK_LMENU, VK_RMENU, VK_MENU):
+        if _clip_user32.GetAsyncKeyState(vk) & 0x8000:
+            _clip_user32.keybd_event(vk, 0, KEYEVENTF_KEYUP, 0)
+    for mod in ('shift', 'left shift', 'right shift', 'ctrl', 'left ctrl', 'right ctrl', 'alt', 'left alt', 'right alt'):
+        try:
+            keyboard.release(mod)
+        except Exception:
+            pass
+    try:
+        with keyboard._pressed_events_lock:
+            keyboard._pressed_events.clear()
+    except Exception:
+        pass
 
 
 def _save_clipboard():
@@ -243,10 +283,13 @@ def _notify_error(title_key, msg_key):
 
 def _perform_translate():
     saved_clipboard = _save_clipboard()
-    saved = keyboard.stash_state()
     try:
+        _wait_for_physical_release(0.5)
+        _release_modifiers()
+        time.sleep(0.05)
+        pyperclip.copy("")
         keyboard.send('ctrl+c')
-        if not _clipboard_wait(1.0):
+        if not _clipboard_wait(3.0):
             return
         try:
             text = pyperclip.paste()
@@ -263,19 +306,14 @@ def _perform_translate():
         if config.get("auto_paste", True):
             time.sleep(0.05)
             keyboard.send('ctrl+v')
+            time.sleep(0.25)
         if config.get("show_notifications", True) and _tray_app:
             _tray_app.notify(
                 _tray_app.tr("notify_translated_title"),
                 _tray_app.tr("notify_translated_msg"),
             )
     finally:
-        keyboard.restore_state(saved)
-        if not keyboard.is_pressed('shift'):
-            keyboard.release('shift')
-        if not keyboard.is_pressed('ctrl'):
-            keyboard.release('ctrl')
-        if not keyboard.is_pressed('alt'):
-            keyboard.release('alt')
+        _release_modifiers()
         if config.get("auto_paste", True):
             _restore_clipboard(saved_clipboard)
 
@@ -302,8 +340,7 @@ def _on_hotkey():
 
 def _start_hotkey():
     try:
-        keyboard.add_hotkey('ctrl+shift+x', _on_hotkey, suppress=True)
-        keyboard._listener.filtered_modifiers.clear()
+        keyboard.add_hotkey('ctrl+shift+x', _on_hotkey, suppress=True, trigger_on_release=True)
     except Exception:
         _notify_error("notify_hotkey_error_title", "notify_hotkey_error_msg")
 
