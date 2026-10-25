@@ -172,7 +172,70 @@ def _clipboard_wait(timeout=1.0):
     return False
 
 
+_clip_user32 = ctypes.WinDLL("user32", use_last_error=True)
+_clip_kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+_clip_kernel32.GlobalSize.argtypes = [wintypes.HANDLE]
+_clip_kernel32.GlobalSize.restype = ctypes.c_size_t
+_clip_kernel32.GlobalLock.argtypes = [wintypes.HANDLE]
+_clip_kernel32.GlobalLock.restype = ctypes.c_void_p
+_clip_kernel32.GlobalUnlock.argtypes = [wintypes.HANDLE]
+_clip_kernel32.GlobalAlloc.argtypes = [ctypes.c_uint, ctypes.c_size_t]
+_clip_kernel32.GlobalAlloc.restype = wintypes.HANDLE
+_clip_user32.OpenClipboard.argtypes = [wintypes.HWND]
+_clip_user32.GetClipboardData.argtypes = [ctypes.c_uint]
+_clip_user32.GetClipboardData.restype = wintypes.HANDLE
+_clip_user32.SetClipboardData.argtypes = [ctypes.c_uint, wintypes.HANDLE]
+_clip_user32.SetClipboardData.restype = wintypes.HANDLE
+
+
+def _save_clipboard():
+    if not _clip_user32.OpenClipboard(None):
+        return {}
+    saved = {}
+    fmt = 0
+    try:
+        while True:
+            fmt = _clip_user32.EnumClipboardFormats(fmt)
+            if not fmt:
+                break
+            h_data = _clip_user32.GetClipboardData(fmt)
+            if h_data:
+                size = _clip_kernel32.GlobalSize(h_data)
+                ptr = _clip_kernel32.GlobalLock(h_data)
+                if ptr:
+                    data = ctypes.string_at(ptr, size)
+                    _clip_kernel32.GlobalUnlock(h_data)
+                    saved[fmt] = (data, size)
+    except Exception:
+        pass
+    finally:
+        _clip_user32.CloseClipboard()
+    return saved
+
+
+def _restore_clipboard(saved):
+    if not saved:
+        return
+    if not _clip_user32.OpenClipboard(None):
+        return
+    try:
+        _clip_user32.EmptyClipboard()
+        for fmt, (data, size) in saved.items():
+            h_data = _clip_kernel32.GlobalAlloc(0x0042, size)
+            if h_data:
+                ptr = _clip_kernel32.GlobalLock(h_data)
+                if ptr:
+                    ctypes.memmove(ptr, data, size)
+                    _clip_kernel32.GlobalUnlock(h_data)
+                    _clip_user32.SetClipboardData(fmt, h_data)
+    except Exception:
+        pass
+    finally:
+        _clip_user32.CloseClipboard()
+
+
 def _perform_translate():
+    saved_clipboard = _save_clipboard()
     saved = keyboard.stash_state()
     try:
         keyboard.send('ctrl+c')
@@ -204,6 +267,7 @@ def _perform_translate():
             keyboard.release('ctrl')
         if not keyboard.is_pressed('alt'):
             keyboard.release('alt')
+        _restore_clipboard(saved_clipboard)
 
 
 def _dispatch_hotkey():
