@@ -35,10 +35,9 @@ Open the **ClipTranslate.exe** application you downloaded
 - Lightweight and resource-efficient, typically using less than **50 MB** of RAM.
 
 
-
-
-
 ## Usage
+
+![Uygulama Demosu](Assets/howToUsage.gif)
 
 1. Launch **ClipTranslate**.
 2. Type any text that you want to translate.
