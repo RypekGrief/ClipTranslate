@@ -82,7 +82,8 @@ def _migrate_old_config():
 
 
 def load_config():
-    global config
+    global config, config_was_reset
+    config_was_reset = False
 
     os.makedirs(CONFIG_DIR, exist_ok=True)
 
@@ -94,6 +95,7 @@ def load_config():
             config = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         config = {}
+        config_was_reset = True
 
     changed = False
     for key, value in DEFAULT_CONFIG.items():
@@ -234,6 +236,11 @@ def _restore_clipboard(saved):
         _clip_user32.CloseClipboard()
 
 
+def _notify_error(title_key, msg_key):
+    if _tray_app:
+        _tray_app.notify(_tray_app.tr(title_key), _tray_app.tr(msg_key))
+
+
 def _perform_translate():
     saved_clipboard = _save_clipboard()
     saved = keyboard.stash_state()
@@ -244,11 +251,13 @@ def _perform_translate():
         try:
             text = pyperclip.paste()
         except Exception:
+            _notify_error("notify_clipboard_error_title", "notify_clipboard_error_msg")
             return
         if not text or not text.strip():
             return
         translated = translator.translate(text, config["target_language"])
         if not translated:
+            _notify_error("notify_translate_error_title", "notify_translate_error_msg")
             return
         pyperclip.copy(translated)
         if config.get("auto_paste", True):
@@ -281,7 +290,7 @@ def _dispatch_hotkey():
     try:
         _perform_translate()
     except Exception:
-        pass
+        _notify_error("notify_translate_error_title", "notify_translate_error_msg")
     finally:
         _busy = False
 
@@ -291,8 +300,11 @@ def _on_hotkey():
 
 
 def _start_hotkey():
-    keyboard.add_hotkey('ctrl+shift+x', _on_hotkey, suppress=True)
-    keyboard._listener.filtered_modifiers.clear()
+    try:
+        keyboard.add_hotkey('ctrl+shift+x', _on_hotkey, suppress=True)
+        keyboard._listener.filtered_modifiers.clear()
+    except Exception:
+        _notify_error("notify_hotkey_error_title", "notify_hotkey_error_msg")
 
 
 def _stop_hotkey():
@@ -377,6 +389,9 @@ def main():
     )
 
     _start_hotkey()
+
+    if config_was_reset:
+        _notify_error("notify_config_error_title", "notify_config_error_msg")
 
     _tray_app.run()
 
