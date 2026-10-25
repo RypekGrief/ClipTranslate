@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import ctypes
+from ctypes import wintypes
 import threading
 import winreg
 
@@ -276,8 +277,20 @@ def on_auto_paste_change(new_state):
     save_config()
 
 
+def _acquire_single_instance_lock():
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.CreateMutexW.argtypes = [wintypes.LPVOID, wintypes.BOOL, wintypes.LPCWSTR]
+    kernel32.CreateMutexW.restype = wintypes.HANDLE
+    kernel32.CreateMutexW(None, False, "ClipTranslate_SingleInstance")
+    ERROR_ALREADY_EXISTS = 183
+    return ctypes.get_last_error() != ERROR_ALREADY_EXISTS
+
+
 def main():
     global config, _tray_app
+
+    if not _acquire_single_instance_lock():
+        return
 
     load_config()
 
