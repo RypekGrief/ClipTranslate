@@ -338,9 +338,19 @@ def _on_hotkey():
     threading.Thread(target=_dispatch_hotkey, daemon=True).start()
 
 
+def _handle_x_key(event):
+    ctrl = _clip_user32.GetAsyncKeyState(VK_CONTROL) & 0x8000
+    shift = _clip_user32.GetAsyncKeyState(VK_SHIFT) & 0x8000
+    alt = _clip_user32.GetAsyncKeyState(VK_MENU) & 0x8000
+    if ctrl and shift and not alt:
+        _on_hotkey()
+        return False
+    return True
+
+
 def _start_hotkey():
     try:
-        keyboard.add_hotkey('ctrl+shift+x', _on_hotkey, suppress=True, trigger_on_release=True)
+        keyboard.on_press_key('x', _handle_x_key, suppress=True)
     except Exception:
         _notify_error("notify_hotkey_error_title", "notify_hotkey_error_msg")
 
