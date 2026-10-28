@@ -164,11 +164,10 @@ def _cleanup_old_startup_shortcut():
 
 
 def _clipboard_wait(timeout=1.0):
-    user32 = ctypes.windll.user32
-    start_seq = user32.GetClipboardSequenceNumber()
+    start_seq = _clip_user32.GetClipboardSequenceNumber()
     deadline = time.time() + timeout
     while time.time() < deadline:
-        if user32.GetClipboardSequenceNumber() != start_seq:
+        if _clip_user32.GetClipboardSequenceNumber() != start_seq:
             return True
         time.sleep(0.01)
     return False
@@ -181,13 +180,25 @@ _clip_kernel32.GlobalSize.restype = ctypes.c_size_t
 _clip_kernel32.GlobalLock.argtypes = [wintypes.HANDLE]
 _clip_kernel32.GlobalLock.restype = ctypes.c_void_p
 _clip_kernel32.GlobalUnlock.argtypes = [wintypes.HANDLE]
+_clip_kernel32.GlobalUnlock.restype = wintypes.BOOL
 _clip_kernel32.GlobalAlloc.argtypes = [ctypes.c_uint, ctypes.c_size_t]
 _clip_kernel32.GlobalAlloc.restype = wintypes.HANDLE
+_clip_kernel32.GlobalFree.argtypes = [wintypes.HANDLE]
+_clip_kernel32.GlobalFree.restype = wintypes.HANDLE
 _clip_user32.OpenClipboard.argtypes = [wintypes.HWND]
+_clip_user32.OpenClipboard.restype = wintypes.BOOL
+_clip_user32.CloseClipboard.argtypes = []
+_clip_user32.CloseClipboard.restype = wintypes.BOOL
+_clip_user32.EmptyClipboard.argtypes = []
+_clip_user32.EmptyClipboard.restype = wintypes.BOOL
+_clip_user32.EnumClipboardFormats.argtypes = [ctypes.c_uint]
+_clip_user32.EnumClipboardFormats.restype = ctypes.c_uint
 _clip_user32.GetClipboardData.argtypes = [ctypes.c_uint]
 _clip_user32.GetClipboardData.restype = wintypes.HANDLE
 _clip_user32.SetClipboardData.argtypes = [ctypes.c_uint, wintypes.HANDLE]
 _clip_user32.SetClipboardData.restype = wintypes.HANDLE
+_clip_user32.GetClipboardSequenceNumber.argtypes = []
+_clip_user32.GetClipboardSequenceNumber.restype = wintypes.DWORD
 _clip_user32.GetAsyncKeyState.argtypes = [ctypes.c_int]
 _clip_user32.GetAsyncKeyState.restype = wintypes.SHORT
 _clip_user32.keybd_event.argtypes = [ctypes.c_byte, ctypes.c_byte, ctypes.c_uint, ctypes.c_void_p]
@@ -230,24 +241,47 @@ def _release_modifiers():
         pass
 
 
+_NON_HGLOBAL_FORMATS = frozenset({
+    2,      # CF_BITMAP
+    3,      # CF_METAFILEPICT
+    9,      # CF_PALETTE
+    14,     # CF_ENHMETAFILE
+    0x0080, # CF_OWNERDISPLAY
+    0x0082, # CF_DSPBITMAP
+    0x0083, # CF_DSPMETAFILEPICT
+    0x008E, # CF_DSPENHMETAFILE
+})
+
+
 def _save_clipboard():
-    if not _clip_user32.OpenClipboard(None):
-        return {}
     saved = {}
+    opened = False
+    for _ in range(5):
+        if _clip_user32.OpenClipboard(None):
+            opened = True
+            break
+        time.sleep(0.01)
+    if not opened:
+        return saved
     fmt = 0
     try:
         while True:
             fmt = _clip_user32.EnumClipboardFormats(fmt)
             if not fmt:
                 break
+            if fmt in _NON_HGLOBAL_FORMATS or 0x0200 <= fmt <= 0x02FF or 0x0300 <= fmt <= 0x03FF:
+                continue
             h_data = _clip_user32.GetClipboardData(fmt)
-            if h_data:
-                size = _clip_kernel32.GlobalSize(h_data)
-                ptr = _clip_kernel32.GlobalLock(h_data)
-                if ptr:
-                    data = ctypes.string_at(ptr, size)
-                    _clip_kernel32.GlobalUnlock(h_data)
-                    saved[fmt] = (data, size)
+            if not h_data:
+                continue
+            size = _clip_kernel32.GlobalSize(h_data)
+            if size == 0 or size > 50 * 1024 * 1024:
+                continue
+            ptr = _clip_kernel32.GlobalLock(h_data)
+            if ptr:
+                data = ctypes.string_at(ptr, size)
+                _clip_kernel32.GlobalUnlock(h_data)
+                saved[fmt] = (data, size)
     except Exception:
         pass
     finally:
@@ -258,18 +292,28 @@ def _save_clipboard():
 def _restore_clipboard(saved):
     if not saved:
         return
-    if not _clip_user32.OpenClipboard(None):
+    opened = False
+    for _ in range(5):
+        if _clip_user32.OpenClipboard(None):
+            opened = True
+            break
+        time.sleep(0.01)
+    if not opened:
         return
     try:
         _clip_user32.EmptyClipboard()
         for fmt, (data, size) in saved.items():
             h_data = _clip_kernel32.GlobalAlloc(0x0042, size)
-            if h_data:
-                ptr = _clip_kernel32.GlobalLock(h_data)
-                if ptr:
-                    ctypes.memmove(ptr, data, size)
-                    _clip_kernel32.GlobalUnlock(h_data)
-                    _clip_user32.SetClipboardData(fmt, h_data)
+            if not h_data:
+                continue
+            ptr = _clip_kernel32.GlobalLock(h_data)
+            if not ptr:
+                _clip_kernel32.GlobalFree(h_data)
+                continue
+            ctypes.memmove(ptr, data, size)
+            _clip_kernel32.GlobalUnlock(h_data)
+            if not _clip_user32.SetClipboardData(fmt, h_data):
+                _clip_kernel32.GlobalFree(h_data)
     except Exception:
         pass
     finally:
