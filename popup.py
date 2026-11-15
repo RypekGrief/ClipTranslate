@@ -18,8 +18,8 @@ _BUTTON_HOVER = "#353B48"
 _TEXT_FG = "#F3F4F6"
 _BADGE_FG = "#E5E7EB"
 _SELECT_BG = "#3B4252"
-_SCROLL_THUMB = "#3A404D"
-_SCROLL_THUMB_HOVER = "#4E5666"
+_SCROLL_THUMB = "#4B5563"
+_SCROLL_THUMB_HOVER = "#6B7280"
 _COPY_OK = "#4ADE80"
 _DWMWA_WINDOW_CORNER_PREFERENCE = 33
 _DWMWA_BORDER_COLOR = 34
@@ -90,7 +90,7 @@ class TranslationPopup:
     PADDING = 10
     TEXT_PAD = 6
     GAP = 12
-    SCROLLBAR_WIDTH = 6
+    SCROLLBAR_WIDTH = 7
     BTN_SIZE = 22
     BADGE_HEIGHT = 20
     SPACING_1 = 2
@@ -375,6 +375,7 @@ class TranslationPopup:
         self._root.deiconify()
         self._root.lift()
         self._root.update_idletasks()
+        self._scroll_first, self._scroll_last = self._text_widget.yview()
         self._apply_dwm()
         self._draw_scroll_thumb()
         self._visible = True
@@ -399,6 +400,7 @@ class TranslationPopup:
                 pass
             self._copy_feedback_id = None
         self._draw_copy_button()
+        self._set_scrollbar(False)
         self._scroll_first = 0.0
         self._scroll_last = 1.0
         self._scroll_hover = False
@@ -498,7 +500,12 @@ class TranslationPopup:
 
     def _set_scrollbar(self, visible):
         if visible and not self._scrollbar_visible:
-            self._scrollbar.pack(side="right", fill="y")
+            self._scrollbar.pack(
+                side="right",
+                fill="y",
+                padx=(max(4, self._text_pad // 2), 0),
+                before=self._text_widget,
+            )
             self._scrollbar_visible = True
             self._scrollbar.configure(cursor="hand2")
         elif not visible and self._scrollbar_visible:
@@ -536,7 +543,11 @@ class TranslationPopup:
             top = max(0, bottom - min_thumb)
         fill = _SCROLL_THUMB_HOVER if (self._scroll_hover or self._scroll_drag) else _SCROLL_THUMB
         width = self._sb_width
-        self._round_rect(canvas, 1, top + 1, width - 1, bottom - 1, max(2, (width - 2) // 2), fill)
+        if bottom - top < width:
+            bottom = top + width
+        canvas.create_oval(0, top, width, top + width, fill=fill, outline="")
+        canvas.create_rectangle(0, top + width / 2, width, bottom - width / 2, fill=fill, outline="")
+        canvas.create_oval(0, bottom - width, width, bottom, fill=fill, outline="")
 
     def _on_scroll_configure(self, event):
         self._draw_scroll_thumb()
