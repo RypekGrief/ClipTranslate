@@ -42,10 +42,16 @@ Open the **ClipTranslate.exe** application you downloaded
 - The Translation Window that opens after the translation is made, only changes the data and size if the translation is made again without closing it.
 
 >***You can turn the Auto Paste setting on/off by left-clicking on the application in the system tray.***
+![TranslationWindow](Assets/TranslationWindow.png)
 
 ## Usage
 
-![Uygulama Demosu](Assets/howToUsage.gif)
+>Auto Paste usage:
+![AutoPasteUsage](Assets/howToUsage.gif)
+
+>Translation Window usage:
+![TranslationWindowUsage](Assets/TranslationWindowUsage.gif)
+
 
 1. Start **ClipTranslate**.
 2. Type or select the text you want to translate.
