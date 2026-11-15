@@ -5,6 +5,8 @@ import tkinter as tk
 import tkinter.font as tkfont
 from ctypes import wintypes
 
+import pyperclip
+
 _MONITOR_DEFAULTTONEAREST = 2
 _GWL_EXSTYLE = -20
 _WS_EX_NOACTIVATE = 0x08000000
@@ -70,6 +72,8 @@ class TranslationPopup:
         self._root = None
         self._text_widget = None
         self._scrollbar = None
+        self._copy_btn = None
+        self._copy_feedback_id = None
         self._font = None
         self._line_height = 14
         self._dpi_scale = 1.0
@@ -138,19 +142,37 @@ class TranslationPopup:
         header.pack(side="top", fill="x")
         header.pack_propagate(False)
 
+        btn_pad = int(round(8 * dpi_scale))
+        btn_gap = int(round(4 * dpi_scale))
+        btn_pad_y = int(round(2 * dpi_scale))
+
         close_btn = tk.Label(
             header,
             text="\u2715",
             bg="#000000",
             fg="#FFFFFF",
             font=self._font,
-            padx=8,
+            padx=btn_pad,
             cursor="hand2",
         )
-        close_btn.pack(side="right", padx=(0, 4), pady=2)
+        close_btn.pack(side="right", padx=(0, btn_gap), pady=btn_pad_y)
         close_btn.bind("<Enter>", lambda e: close_btn.configure(bg="#222222"))
         close_btn.bind("<Leave>", lambda e: close_btn.configure(bg="#000000"))
         close_btn.bind("<Button-1>", self._on_close_click)
+
+        self._copy_btn = tk.Label(
+            header,
+            text="\u29C9",
+            bg="#000000",
+            fg="#FFFFFF",
+            font=self._font,
+            padx=btn_pad,
+            cursor="hand2",
+        )
+        self._copy_btn.pack(side="right", padx=(0, btn_gap), pady=btn_pad_y)
+        self._copy_btn.bind("<Enter>", lambda e: self._copy_btn.configure(bg="#222222"))
+        self._copy_btn.bind("<Leave>", lambda e: self._copy_btn.configure(bg="#000000"))
+        self._copy_btn.bind("<Button-1>", self._on_copy_click)
 
         body = tk.Frame(container, bg="#000000")
         body.pack(side="top", fill="both", expand=True, padx=self._padding, pady=(0, self._padding))
@@ -229,6 +251,7 @@ class TranslationPopup:
                             pass
                         self._text_widget = None
                         self._scrollbar = None
+                        self._copy_btn = None
                         self._font = None
                         self._root = None
                         return
@@ -274,6 +297,17 @@ class TranslationPopup:
             self._text_widget.configure(state="disabled")
         except Exception:
             pass
+        if self._copy_feedback_id is not None:
+            try:
+                self._root.after_cancel(self._copy_feedback_id)
+            except Exception:
+                pass
+            self._copy_feedback_id = None
+        if self._copy_btn is not None:
+            try:
+                self._copy_btn.configure(text="\u29C9")
+            except Exception:
+                pass
         self._current_text = None
         self._is_pinned = False
         self._pinned_x = None
@@ -379,6 +413,35 @@ class TranslationPopup:
     def _on_close_click(self, event):
         self._apply_close()
         return "break"
+
+    def _on_copy_click(self, event):
+        self._copy_text()
+        return "break"
+
+    def _copy_text(self):
+        if not self._current_text:
+            return
+        try:
+            pyperclip.copy(self._current_text)
+        except Exception:
+            pass
+        if self._copy_btn is None:
+            return
+        self._copy_btn.configure(text="\u2713")
+        if self._copy_feedback_id is not None:
+            try:
+                self._root.after_cancel(self._copy_feedback_id)
+            except Exception:
+                pass
+        self._copy_feedback_id = self._root.after(1000, self._restore_copy_icon)
+
+    def _restore_copy_icon(self):
+        self._copy_feedback_id = None
+        if self._copy_btn is not None:
+            try:
+                self._copy_btn.configure(text="\u29C9")
+            except Exception:
+                pass
 
     def _copy_selection(self, event):
         try:
