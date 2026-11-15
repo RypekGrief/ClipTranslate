@@ -26,6 +26,7 @@ class Tray:
         initial_icon = self._render_icon(
             state.get("target_language", "en"),
             state.get("enabled", True),
+            state.get("auto_paste", False),
         )
         self.icon = pystray.Icon("ClipTranslate", initial_icon, "ClipTranslate", menu=self._menu())
         self._update_title()
@@ -36,7 +37,7 @@ class Tray:
         mode_label = "Auto Paste" if self.state.get("auto_paste", False) else "Popup Mode"
         self.icon.title = f"ClipTranslate → {en_name} | {mode_label}"
 
-    def _render_icon(self, lang_code, enabled):
+    def _render_icon(self, lang_code, enabled, auto_paste=False):
         img = self._icon_original.copy()
         draw = ImageDraw.Draw(img)
         try:
@@ -55,9 +56,43 @@ class Tray:
         y1 = y2 - th - pad * 2
         draw.rounded_rectangle((x1, y1, x2, y2), radius=12, fill=(0, 0, 0, 180))
         draw.text(((x1 + x2) // 2, (y1 + y2) // 2), label, fill="white", font=font, anchor="mm")
+        if not auto_paste:
+            self._draw_chat_badge(draw, img.width, img.height)
         if not enabled:
             img = ImageEnhance.Color(img).enhance(0.0)
         return img
+
+    def _draw_chat_badge(self, draw, width, height):
+        size = min(width, height)
+        diameter = int(round(size * 0.36))
+        margin = int(round(size * 0.045))
+        left = width - margin - diameter
+        top = margin
+        right = left + diameter
+        bottom = top + diameter
+        outline_width = max(1, int(round(size * 0.014)))
+
+        tail = [
+            (int(left + diameter * 0.22), int(top + diameter * 0.66)),
+            (int(left + diameter * 0.46), int(top + diameter * 0.80)),
+            (int(left + diameter * 0.02), int(top + diameter * 0.99)),
+        ]
+        draw.polygon(tail, fill=(0, 0, 0, 245), outline=(255, 255, 255, 230), width=outline_width)
+        draw.ellipse(
+            (left, top, right, bottom),
+            fill=(0, 0, 0, 245),
+            outline=(255, 255, 255, 230),
+            width=outline_width,
+        )
+
+        line_h = max(1, int(round(diameter * 0.08)))
+        gap = max(2, int(round(diameter * 0.10)))
+        start_y = int(top + diameter * 0.26)
+        for i, factor in enumerate((0.46, 0.46, 0.30)):
+            line_w = max(2, int(round(diameter * factor)))
+            lx = int(left + (diameter - line_w) / 2)
+            ly = start_y + i * (line_h + gap)
+            draw.rectangle((lx, ly, lx + line_w, ly + line_h), fill=(255, 255, 255, 235))
 
     def _s(self, key):
         return STRINGS.get(self.menu_language, STRINGS["en"]).get(key, key)
@@ -151,7 +186,11 @@ class Tray:
 
     def _set_target_language(self, lang_code):
         self.state["target_language"] = lang_code
-        self.icon.icon = self._render_icon(lang_code, self.state.get("enabled", True))
+        self.icon.icon = self._render_icon(
+            lang_code,
+            self.state.get("enabled", True),
+            self.state.get("auto_paste", False),
+        )
         self._update_title()
         self.icon.menu = self._menu()
         self.on_target_language_change(lang_code)
@@ -174,6 +213,7 @@ class Tray:
         self.icon.icon = self._render_icon(
             self.state.get("target_language", "en"),
             self.state["enabled"],
+            self.state.get("auto_paste", False),
         )
         self.on_toggle_enabled(self.state["enabled"])
 
@@ -187,6 +227,11 @@ class Tray:
 
     def _toggle_auto_paste(self, icon, item):
         self.state["auto_paste"] = not self.state.get("auto_paste", False)
+        self.icon.icon = self._render_icon(
+            self.state.get("target_language", "en"),
+            self.state.get("enabled", True),
+            self.state["auto_paste"],
+        )
         self._update_title()
         self.on_auto_paste_change(self.state["auto_paste"])
 
