@@ -457,8 +457,27 @@ def _acquire_single_instance_lock():
     return ctypes.get_last_error() != ERROR_ALREADY_EXISTS
 
 
+def _enable_dpi_awareness():
+    try:
+        shcore = ctypes.WinDLL("shcore", use_last_error=True)
+        shcore.SetProcessDpiAwareness.argtypes = [ctypes.c_int]
+        shcore.SetProcessDpiAwareness.restype = ctypes.HRESULT
+        shcore.SetProcessDpiAwareness(2)
+        return
+    except Exception:
+        pass
+    try:
+        _clip_user32.SetProcessDPIAware.argtypes = []
+        _clip_user32.SetProcessDPIAware.restype = wintypes.BOOL
+        _clip_user32.SetProcessDPIAware()
+    except Exception:
+        pass
+
+
 def main():
     global config, _tray_app, _popup
+
+    _enable_dpi_awareness()
 
     if not _acquire_single_instance_lock():
         return

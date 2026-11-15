@@ -72,6 +72,15 @@ class TranslationPopup:
         self._scrollbar = None
         self._font = None
         self._line_height = 14
+        self._dpi_scale = 1.0
+        self._width_min = self.WIDTH_MIN
+        self._width_max = self.WIDTH_MAX
+        self._height_min = self.HEIGHT_MIN
+        self._height_max = self.HEIGHT_MAX
+        self._header_height = self.HEADER_HEIGHT
+        self._padding = self.PADDING
+        self._border = self.BORDER
+        self._gap = self.GAP
         self._scrollbar_visible = False
         self._current_text = None
         self._is_pinned = False
@@ -103,6 +112,16 @@ class TranslationPopup:
 
     def _build(self):
         self._root = tk.Tk()
+        dpi_scale = max(1.0, self._root.winfo_fpixels("1i") / 96.0)
+        self._dpi_scale = dpi_scale
+        self._width_min = int(round(self.WIDTH_MIN * dpi_scale))
+        self._width_max = int(round(self.WIDTH_MAX * dpi_scale))
+        self._height_min = int(round(self.HEIGHT_MIN * dpi_scale))
+        self._height_max = int(round(self.HEIGHT_MAX * dpi_scale))
+        self._header_height = int(round(self.HEADER_HEIGHT * dpi_scale))
+        self._padding = int(round(self.PADDING * dpi_scale))
+        self._border = int(round(self.BORDER * dpi_scale))
+        self._gap = int(round(self.GAP * dpi_scale))
         self._root.withdraw()
         self._root.overrideredirect(True)
         self._root.attributes("-topmost", True)
@@ -113,9 +132,9 @@ class TranslationPopup:
         self._line_height = self._font.metrics("linespace")
 
         container = tk.Frame(self._root, bg="#000000")
-        container.pack(fill="both", expand=True, padx=self.BORDER, pady=self.BORDER)
+        container.pack(fill="both", expand=True, padx=self._border, pady=self._border)
 
-        header = tk.Frame(container, bg="#000000", height=self.HEADER_HEIGHT)
+        header = tk.Frame(container, bg="#000000", height=self._header_height)
         header.pack(side="top", fill="x")
         header.pack_propagate(False)
 
@@ -134,7 +153,7 @@ class TranslationPopup:
         close_btn.bind("<Button-1>", self._on_close_click)
 
         body = tk.Frame(container, bg="#000000")
-        body.pack(side="top", fill="both", expand=True, padx=self.PADDING, pady=(0, self.PADDING))
+        body.pack(side="top", fill="both", expand=True, padx=self._padding, pady=(0, self._padding))
 
         self._scrollbar = tk.Scrollbar(
             body,
@@ -237,8 +256,8 @@ class TranslationPopup:
             x, y = self._clamp(self._pinned_x, self._pinned_y, width, height)
         else:
             cursor_x, cursor_y = self._cursor_pos()
-            x = cursor_x + self.GAP
-            y = cursor_y - height - self.GAP
+            x = cursor_x + self._gap
+            y = cursor_y - height - self._gap
             x, y = self._clamp(x, y, width, height, (cursor_x, cursor_y))
 
         self._root.geometry(f"{width}x{height}+{x}+{y}")
@@ -271,8 +290,8 @@ class TranslationPopup:
             self._scrollbar_visible = False
 
     def _measure(self, text):
-        border = 2 * self.BORDER
-        padding = 2 * self.PADDING
+        border = 2 * self._border
+        padding = 2 * self._padding
 
         longest = 0
         for line in text.splitlines() or [""]:
@@ -280,17 +299,17 @@ class TranslationPopup:
                 longest = max(longest, self._font.measure(line))
             except Exception:
                 longest = max(longest, len(line) * 7)
-        text_width = min(longest, self.WIDTH_MAX - border - padding)
-        width = max(self.WIDTH_MIN, min(self.WIDTH_MAX, text_width + border + padding))
+        text_width = min(longest, self._width_max - border - padding)
+        width = max(self._width_min, min(self._width_max, text_width + border + padding))
 
         wrap_px = max(1, width - border - padding - self.SCROLLBAR_WIDTH)
         wrapped = 0
         for line in text.splitlines() or [""]:
             wrapped += self._wrap_lines(line, wrap_px)
 
-        total = wrapped * self._line_height + self.HEADER_HEIGHT + padding + border
-        needs_scroll = total > self.HEIGHT_MAX
-        height = max(self.HEIGHT_MIN, min(self.HEIGHT_MAX, total))
+        total = wrapped * self._line_height + self._header_height + padding + border
+        needs_scroll = total > self._height_max
+        height = max(self._height_min, min(self._height_max, total))
         return width, height, needs_scroll
 
     def _wrap_lines(self, line, max_px):

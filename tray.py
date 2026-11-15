@@ -33,7 +33,8 @@ class Tray:
     def _update_title(self):
         lang = self.state.get("target_language", "en")
         en_name = TRANSLATED_LANGUAGE_NAMES.get("en", {}).get(lang, lang)
-        self.icon.title = f"ClipTranslate → {en_name}"
+        mode_label = "Auto Paste" if self.state.get("auto_paste", False) else "Popup Mode"
+        self.icon.title = f"ClipTranslate → {en_name} | {mode_label}"
 
     def _render_icon(self, lang_code, enabled):
         img = self._icon_original.copy()
@@ -74,7 +75,6 @@ class Tray:
                 s("active"),
                 self._toggle_enabled,
                 checked=lambda item: self.state["enabled"],
-                default=True,
             ),
             pystray.MenuItem(
                 s("start_with_windows"),
@@ -89,7 +89,8 @@ class Tray:
             pystray.MenuItem(
                 s("auto_paste"),
                 self._toggle_auto_paste,
-                checked=lambda item: self.state.get("auto_paste", True),
+                checked=lambda item: self.state.get("auto_paste", False),
+                default=True,
             ),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(s("language"), self._language_menu()),
@@ -185,7 +186,8 @@ class Tray:
         self.on_toggle_notifications(self.state["show_notifications"])
 
     def _toggle_auto_paste(self, icon, item):
-        self.state["auto_paste"] = not self.state.get("auto_paste", True)
+        self.state["auto_paste"] = not self.state.get("auto_paste", False)
+        self._update_title()
         self.on_auto_paste_change(self.state["auto_paste"])
 
     def _exit(self, icon, item):
