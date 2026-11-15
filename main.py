@@ -354,7 +354,9 @@ def _perform_translate():
             keyboard.send('ctrl+v')
             time.sleep(0.25)
         elif _popup:
-            _popup.show(translated)
+            label_prefix = _tray_app.tr("target_language") if _tray_app else "Target Language"
+            badge_label = f"{label_prefix}: {config['target_language'].upper()}"
+            _popup.show(translated, badge_label)
         if config.get("show_notifications", True) and _tray_app:
             _tray_app.notify(
                 _tray_app.tr("notify_translated_title"),
