@@ -37,6 +37,7 @@ import keyboard
 
 import translator
 import tray
+import popup
 
 DEFAULT_CONFIG = {
     "hotkey": "ctrl+shift+x",
@@ -45,11 +46,12 @@ DEFAULT_CONFIG = {
     "start_with_windows": True,
     "enabled": True,
     "show_notifications": True,
-    "auto_paste": True,
+    "auto_paste": False,
 }
 
 config = {}
 _tray_app = None
+_popup = None
 _busy = False
 _busy_lock = threading.Lock()
 
@@ -346,11 +348,13 @@ def _perform_translate():
         if not translated:
             _notify_error("notify_translate_error_title", "notify_translate_error_msg")
             return
-        pyperclip.copy(translated)
-        if config.get("auto_paste", True):
+        if config.get("auto_paste", False):
+            pyperclip.copy(translated)
             time.sleep(0.05)
             keyboard.send('ctrl+v')
             time.sleep(0.25)
+        elif _popup:
+            _popup.show(translated)
         if config.get("show_notifications", True) and _tray_app:
             _tray_app.notify(
                 _tray_app.tr("notify_translated_title"),
@@ -358,8 +362,7 @@ def _perform_translate():
             )
     finally:
         _release_modifiers()
-        if config.get("auto_paste", True):
-            _restore_clipboard(saved_clipboard)
+        _restore_clipboard(saved_clipboard)
 
 
 def _dispatch_hotkey():
@@ -455,7 +458,7 @@ def _acquire_single_instance_lock():
 
 
 def main():
-    global config, _tray_app
+    global config, _tray_app, _popup
 
     if not _acquire_single_instance_lock():
         return
@@ -480,6 +483,8 @@ def main():
         on_auto_paste_change,
     )
 
+    _popup = popup.TranslationPopup()
+
     _start_hotkey()
 
     if config_was_reset:
@@ -488,6 +493,7 @@ def main():
     _tray_app.run()
 
     _stop_hotkey()
+    _popup.shutdown()
 
 
 if __name__ == "__main__":
